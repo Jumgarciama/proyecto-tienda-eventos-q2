@@ -1,0 +1,61 @@
+================================================================
+EVIDENCIA · Variante Q2 / fila 4 · Arquitectura de eventos
+================================================================
+
+=== 1. Muestra Hoja 1 (fila 4) ===
+Comando: cd codigo && mvn -q compile && java -cp target/classes com.tienda.Hoja1Sample
+
+PEDIDO 1 CONFIRMADO total=350000
+PEDIDO 2 CONFIRMADO total=357000
+PEDIDO 3 RECHAZADO total=0
+PEDIDO 4 CONFIRMADO total=2320500
+
+=== 2. Muestra Hoja 2 (fila 4, Q2: factura + aviso) ===
+Comando: cd codigo && mvn -q compile && java -cp target/classes com.tienda.Hoja2Sample
+
+PEDIDO 1 CONFIRMADO total=350000
+FACTURA F-0001 pedido=1 cliente=C-001 total=350000
+AVISO cliente=C-001
+PEDIDO 2 CONFIRMADO total=350000
+FACTURA FALLO pedido=2 cliente=C-999
+AVISO cliente=C-999
+PEDIDO 3 CONFIRMADO total=357000
+FACTURA F-0002 pedido=3 cliente=C-002 total=357000
+AVISO cliente=C-002
+
+=== 3. Pruebas (mvn test) ===
+Comando: cd codigo && mvn test
+
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.422 s -- in com.tienda.ModuleIndependenceTest
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s -- in com.tienda.ReglasNegocioTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+=== 4. git diff --name-status hoja-1 final ===
+Comando: git diff --name-status hoja-1 final
+
+M	LEEME.md
+A	codigo/src/main/java/com/tienda/Hoja2Sample.java
+A	codigo/src/main/java/com/tienda/billing/BillingService.java
+A	codigo/src/main/java/com/tienda/billing/Invoice.java
+A	codigo/src/main/java/com/tienda/billing/InvoiceRepository.java
+A	codigo/src/main/java/com/tienda/notifications/NotificationService.java
+M	codigo/src/test/java/com/tienda/ModuleIndependenceTest.java
+
+=== 5. Violación inducida: OrderService importa y usa InventoryService ===
+
+Paso 1 (inducir) - grep InventoryService en OrderService.java:
+  2:import com.tienda.inventory.InventoryService;
+  12:    private InventoryService inventoryService;
+
+Paso 2 (mvn test -> FALLA como se espera):
+  [ERROR] Tests run: 11, Failures: 1, Errors: 0, Skipped: 0
+  [ERROR] ModuleIndependenceTest.ordersNoDependeDeOtros:16 Architecture Violation [Priority: MEDIUM]
+  [INFO] BUILD FAILURE
+
+Paso 3 (revertir) - grep InventoryService en OrderService.java:
+  (limpio, sin import)
+
+Paso 4 (mvn test -> PASA de nuevo):
+  [INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0
+  [INFO] BUILD SUCCESS
